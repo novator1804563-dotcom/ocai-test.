@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>OCAI с текущей и желаемой культурой</title>
+<style>
+body { font-family: Arial; max-width: 900px; margin: auto; padding: 20px; }
+h1 { color: #2c3e50; }
+.question { margin-bottom: 30px; border-bottom: 1px solid #ccc; padding-bottom: 20px; }
+.option { margin: 5px 0; }
+input[type=range] { width: 70%; }
+.sum-warning { color: red; font-weight: bold; display: none; }
+button { padding: 10px 20px; font-size: 16px; }
+.val { font-weight: bold; margin-left: 10px; }
+#results { margin-top: 40px; }
+.bar { height: 25px; background-color: #3498db; text-align: right; color: white; padding-right: 5px; margin: 5px 0; }
+.bar-desired { background-color: #e74c3c; }
+</style>
+</head>
+<body>
+
+<h1>OCAI: Текущая и Желаемая культура</h1>
+<p>Для каждого вопроса распределите 100 баллов между вариантами для <b>текущей</b> и <b>желаемой</b> культуры.</p>
+
+<form id="ocaiForm">
+
+<!-- 5 вопросов -->
+<script>
+const questionTitles = [
+  "Атмосфера в вашей организации",
+  "Лидерство в вашей организации",
+  "Управленческие процессы",
+  "Стратегические приоритеты",
+  "Связь и сотрудничество"
+];
+const types = ["Clan", "Adhocracy", "Market", "Hierarchy"];
+for(let i=0;i<questionTitles.length;i++){
+  document.write(`<div class="question" data-question="${i+1}">`);
+  document.write(`<h2>Вопрос ${i+1}: ${questionTitles[i]}</h2>`);
+
+  ["Текущая культура", "Желаемая культура"].forEach(state=>{
+    document.write(`<h4>${state}</h4>`);
+    types.forEach(t=>{
+      document.write(`<div class="option">${t} <input type="range" min="0" max="100" value="25" class="slider-${state.toLowerCase().replace(' ','-')}"><span class="val">25</span></div>`);
+    });
+    document.write(`<div class="sum-warning">Сумма баллов должна быть 100!</div>`);
+  });
+  document.write(`</div>`);
+}
+</script>
+
+<button type="submit">Отправить</button>
+</form>
+
+<div id="results">
+<h2>Результаты участника</h2>
+<h3>Текущая культура</h3>
+<div id="bar-clan-current" class="bar"></div>
+<div id="bar-adhocracy-current" class="bar"></div>
+<div id="bar-market-current" class="bar"></div>
+<div id="bar-hierarchy-current" class="bar"></div>
+
+<h3>Желаемая культура</h3>
+<div id="bar-clan-desired" class="bar bar-desired"></div>
+<div id="bar-adhocracy-desired" class="bar bar-desired"></div>
+<div id="bar-market-desired" class="bar bar-desired"></div>
+<div id="bar-hierarchy-desired" class="bar bar-desired"></div>
+</div>
+
+<script>
+const form = document.getElementById('ocaiForm');
+const questions = document.querySelectorAll('.question');
+
+questions.forEach(q=>{
+  const slidersCurrent = q.querySelectorAll('.slider-текущая-культура');
+  const slidersDesired = q.querySelectorAll('.slider-желаемая-культура');
+  [slidersCurrent, slidersDesired].forEach(sliders=>{
+    sliders.forEach(s=>{
+      s.addEventListener('input',()=>{
+        let sum = 0;
+        sliders.forEach(sl=>sum+=parseInt(sl.value));
+        q.querySelectorAll('.val').forEach((v,i)=>v.textContent = sliders[i].value);
+        q.querySelectorAll('.sum-warning')[0].style.display = (sum!==100)?'block':'none';
+      });
+    });
+  });
+});
+
+form.addEventListener('submit',e=>{
+  e.preventDefault();
+  let valid=true;
+  questions.forEach(q=>{
+    [q.querySelectorAll('.slider-текущая-культура'), q.querySelectorAll('.slider-желаемая-культура')].forEach(sliders=>{
+      let sum=0; sliders.forEach(sl=>sum+=parseInt(sl.value)); if(sum!==100) valid=false;
+    });
+  });
+  if(!valid){ alert('Сумма баллов для каждого блока должна быть 100!'); return; }
+
+  const data = new FormData();
+  let totalsCurrent={clan:0,adhocracy:0,market:0,hierarchy:0};
+  let totalsDesired={clan:0,adhocracy:0,market:0,hierarchy:0};
+  questions.forEach((q,i)=>{
+    const slidersCurrent = q.querySelectorAll('.slider-текущая-культура');
+    const slidersDesired = q.querySelectorAll('.slider-желаемая-культура');
+    types.forEach((t,j)=>{
+      data.append(`q${i+1}_current_${t.toLowerCase()}`, slidersCurrent[j].value);
+      data.append(`q${i+1}_desired_${t.toLowerCase()}`, slidersDesired[j].value);
+      totalsCurrent[t.toLowerCase()
+
+
+nt(slidersCurrent[j].value);
+      totalsDesired[t.toLowerCase()]+=parseInt(slidersDesired[j].value);
+    });
+  });
+
+  const n = questions.length;
+  // Отображение диаграмм
+  document.getElementById('bar-clan-current').style.width = (totalsCurrent.clan/n)+'%';
+  document.getElementById('bar-clan-current').textContent = 'Clan: '+Math.round(totalsCurrent.clan/n);
+  document.getElementById('bar-adhocracy-current').style.width = (totalsCurrent.adhocracy/n)+'%';
+  document.getElementById('bar-adhocracy-current').textContent = 'Adhocracy: '+Math.round(totalsCurrent.adhocracy/n);
+  document.getElementById('bar-market-current').style.width = (totalsCurrent.market/n)+'%';
+  document.getElementById('bar-market-current').textContent = 'Market: '+Math.round(totalsCurrent.market/n);
+  document.getElementById('bar-hierarchy-current').style.width = (totalsCurrent.hierarchy/n)+'%';
+  document.getElementById('bar-hierarchy-current').textContent = 'Hierarchy: '+Math.round(totalsCurrent.hierarchy/n);
+
+  document.getElementById('bar-clan-desired').style.width = (totalsDesired.clan/n)+'%';
+  document.getElementById('bar-clan-desired').textContent = 'Clan: '+Math.round(totalsDesired.clan/n);
+  document.getElementById('bar-adhocracy-desired').style.width = (totalsDesired.adhocracy/n)+'%';
+  document.getElementById('bar-adhocracy-desired').textContent = 'Adhocracy: '+Math.round(totalsDesired.adhocracy/n);
+  document.getElementById('bar-market-desired').style.width = (totalsDesired.market/n)+'%';
+  document.getElementById('bar-market-desired').textContent = 'Market: '+Math.round(totalsDesired.market/n);
+  document.getElementById('bar-hierarchy-desired').style.width = (totalsDesired.hierarchy/n)+'%';
+  document.getElementById('bar-hierarchy-desired').textContent = 'Hierarchy: '+Math.round(totalsDesired.hierarchy/n);
+
+  // Отправка данных в Google Apps Script
+  fetch('ВАШ_WEB_APP_URL',{method:'POST',body:data})
+    .then(()=>alert('Данные успешно отправлены!'))
+    .catch(err=>alert('Ошибка отправки: '+err));
+});
+</script>
+
+</body>
+</html>]+=parseI
+
+
+
+
